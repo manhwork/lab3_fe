@@ -6,14 +6,21 @@ import { useAuth } from "../../store/AuthContext";
 export default function Login() {
     const [loginName, setLoginName] = useState("");
     const [password, setPassword] = useState("");
-    const { login } = useAuth();
+    const { login, user } = useAuth();
     const navigate = useNavigate();
+    const token = localStorage.getItem("token");
+
+    if (token && user) {
+        navigate("/");
+    }
+
     const handleSubmit = async (event) => {
         event.preventDefault();
         try {
             await login(loginName, password);
             // console.log("Logging in with:", { loginName, password });
             navigate("/");
+            alert("Đăng nhập thành công!");
         } catch (error) {
             console.error("Error logging in:", error);
         }
@@ -47,6 +54,13 @@ export default function Login() {
                 >
                     Đăng nhập
                 </Button>
+                <Typography
+                    variant="body2"
+                    sx={{ cursor: "pointer", color: "blue" }}
+                    onClick={() => navigate("/register")}
+                >
+                    Chưa có tài khoản? Đăng ký ngay
+                </Typography>
             </form>
         </>
     );

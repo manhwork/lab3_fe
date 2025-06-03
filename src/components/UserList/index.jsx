@@ -1,15 +1,34 @@
+import {
+    Alert,
+    Box,
+    Chip,
+    CircularProgress,
+    Divider,
+    List,
+    ListItem,
+    ListItemText,
+    Typography,
+} from "@mui/material";
 import React, { useEffect, useState } from "react";
-import { Divider, List, ListItem, ListItemText, Typography, CircularProgress, Alert, Box, Chip } from "@mui/material";
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 
-import "./styles.css";
 import fetchModel from "../../lib/fetchModelData";
+import { useAuth } from "../../store/AuthContext";
+import "./styles.css";
 
 function UserList() {
     const [users, setUsers] = useState([]);
     const [userStats, setUserStats] = useState({});
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+
+    const { user } = useAuth();
+    const token = localStorage.getItem("token");
+    const navigate = useNavigate();
+
+    if (!token || !user) {
+        navigate("/login");
+    }
 
     useEffect(() => {
         const loadUsers = async () => {
@@ -21,7 +40,9 @@ function UserList() {
                 // Load stats for each user
                 const stats = {};
                 for (const user of data) {
-                    const userStats = await fetchModel(`/api/user/stats/${user._id}`);
+                    const userStats = await fetchModel(
+                        `/api/user/stats/${user._id}`
+                    );
                     stats[user._id] = {
                         photoCount: userStats.photo_count,
                         commentCount: userStats.comment_count,
@@ -73,14 +94,31 @@ function UserList() {
                                         color: "inherit",
                                         width: "100%",
                                         padding: "8px 16px",
-                                        backgroundColor: isActive ? "#e3f2fd" : "transparent",
+                                        backgroundColor: isActive
+                                            ? "#e3f2fd"
+                                            : "transparent",
                                     };
                                 }}
                             >
-                                <ListItemText primary={`${user.first_name} ${user.last_name}`} />
+                                <ListItemText
+                                    primary={`${user.first_name} ${user.last_name}`}
+                                />
                             </NavLink>
-                            <Chip color="success" style={{ marginRight: "10px" }} label={`${userStats[user._id]?.photoCount || 0} ảnh`} variant="outlined" />
-                            <Chip color="error" label={`${userStats[user._id]?.commentCount || 0} comment`} variant="outlined" />
+                            <Chip
+                                color="success"
+                                style={{ marginRight: "10px" }}
+                                label={`${
+                                    userStats[user._id]?.photoCount || 0
+                                } ảnh`}
+                                variant="outlined"
+                            />
+                            <Chip
+                                color="error"
+                                label={`${
+                                    userStats[user._id]?.commentCount || 0
+                                } comment`}
+                                variant="outlined"
+                            />
                         </ListItem>
                         <Divider />
                     </React.Fragment>

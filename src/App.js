@@ -19,10 +19,10 @@ import { AuthProvider, useAuth } from "./store/AuthContext";
 
 // Protected Route component
 const ProtectedRoute = ({ children }) => {
-    const token = localStorage.getItem("token");
+    const { user } = useAuth();
     const navigate = useNavigate();
 
-    if (!token) {
+    if (!user) {
         navigate("/login");
     }
 
@@ -31,6 +31,9 @@ const ProtectedRoute = ({ children }) => {
 
 const AppContent = () => {
     const token = localStorage.getItem("token");
+
+    const { user } = useAuth();
+
     return (
         <div>
             <Grid container spacing={2}>
@@ -38,7 +41,7 @@ const AppContent = () => {
                     <TopBar />
                 </Grid>
                 <div className="main-topbar-buffer" />
-                {token && (
+                {token && user && (
                     <Grid item sm={3}>
                         <Paper className="main-grid-item">
                             <UserList />
@@ -74,7 +77,15 @@ const AppContent = () => {
                             />
                             <Route path="/login" element={<Login />} />
                             <Route path="/register" element={<Register />} />
-                            <Route path="/" element={<Navigate to={"/"} />} />
+
+                            <Route
+                                path="/"
+                                element={
+                                    <ProtectedRoute>
+                                        <Navigate to={"/"} />
+                                    </ProtectedRoute>
+                                }
+                            />
                         </Routes>
                     </Paper>
                 </Grid>

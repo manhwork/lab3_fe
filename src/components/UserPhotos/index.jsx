@@ -156,7 +156,7 @@ function UserPhotos() {
                 <Paper key={photo._id} sx={{ p: 2, mb: 2 }}>
                     <Box sx={{ mb: 2 }}>
                         <img
-                            src={imageMap[photo.file_name]}
+                            src={imageMap[photo.file_name] || photo.file_name}
                             alt={`Photo by ${user.first_name}`}
                             style={{ maxWidth: "100px" }}
                         />
