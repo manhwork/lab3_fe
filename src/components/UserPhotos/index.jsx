@@ -78,15 +78,49 @@ function UserPhotos() {
     }, [userId]);
 
     const handleAddComment = async () => {
+        if (
+            newComment?.comment.trim() === "" ||
+            !newComment?.photo_id ||
+            newComment === undefined
+        ) {
+            return;
+        }
         const res = await http.post(
             `/api/photo/commentsOfPhoto/${newComment.photo_id}`,
             {
                 comment: newComment.comment,
             }
         );
+
+        const newCmt = {
+            _id: res.data._id,
+            comment: newComment.comment,
+            date_time: new Date().toISOString(),
+            user: {
+                _id: user._id,
+                first_name: user.first_name,
+                last_name: user.last_name,
+            },
+        };
+
+        setPhotos((prevPhotos) =>
+            prevPhotos.map((photo) =>
+                photo._id === newComment.photo_id
+                    ? {
+                          ...photo,
+                          comments: [...(photo.comments || []), newCmt],
+                      }
+                    : photo
+            )
+        );
+        setError(null);
         console.log("Comment added:", res.data);
-        setNewComment({ comment: "", photo_id: "" });
-        await loadData();
+
+        setNewComment({
+            ...newComment,
+            comment: "",
+            photo_id: "",
+        });
     };
 
     if (loading) {
@@ -179,6 +213,7 @@ function UserPhotos() {
                         variant="outlined"
                         fullWidth
                         multiline
+                        value={newComment?.comment || ""}
                         sx={{ mt: 2 }}
                         onChange={(e) => {
                             setNewComment({
