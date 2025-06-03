@@ -1,8 +1,20 @@
+import {
+    Alert,
+    Box,
+    Button,
+    CircularProgress,
+    Divider,
+    Link,
+    List,
+    ListItem,
+    ListItemText,
+    Paper,
+    TextField,
+    Typography,
+} from "@mui/material";
 import React, { useEffect, useState } from "react";
-import { Typography, Box, Paper, List, ListItem, ListItemText, Link, Divider, CircularProgress, Alert } from "@mui/material";
-import { Link as RouterLink } from "react-router-dom";
-import { useParams } from "react-router-dom";
-import fetchModel, { fetchUser, fetchPhotosOfUser } from "../../lib/fetchModelData";
+import { Link as RouterLink, useParams } from "react-router-dom";
+import fetchModel from "../../lib/fetchModelData";
 
 import "./styles.css";
 
@@ -18,6 +30,7 @@ import ripley1 from "../../images/ripley1.jpg";
 import ripley2 from "../../images/ripley2.jpg";
 import took1 from "../../images/took1.jpg";
 import took2 from "../../images/took2.jpg";
+import http from "../../lib/http";
 
 const imageMap = {
     "kenobi1.jpg": kenobi1,
@@ -40,25 +53,41 @@ function UserPhotos() {
     const [photos, setPhotos] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [newComment, setNewComment] = useState();
+
+    const loadData = async () => {
+        try {
+            setLoading(true);
+            const [userData, photosData] = await Promise.all([
+                fetchModel(`/api/user/${userId}`),
+                fetchModel(`/api/user/photosOfUser/${userId}`),
+            ]);
+            setUser(userData);
+            setPhotos(photosData);
+            setError(null);
+        } catch (err) {
+            setError(err.message);
+            console.error("Error loading data:", err);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
-        const loadData = async () => {
-            try {
-                setLoading(true);
-                const [userData, photosData] = await Promise.all([fetchModel(`/api/user/${userId}`), fetchModel(`/api/user/photosOfUser/${userId}`)]);
-                setUser(userData);
-                setPhotos(photosData);
-                setError(null);
-            } catch (err) {
-                setError(err.message);
-                console.error("Error loading data:", err);
-            } finally {
-                setLoading(false);
-            }
-        };
-
         loadData();
     }, [userId]);
+
+    const handleAddComment = async () => {
+        const res = await http.post(
+            `/api/photo/commentsOfPhoto/${newComment.photo_id}`,
+            {
+                comment: newComment.comment,
+            }
+        );
+        console.log("Comment added:", res.data);
+        setNewComment({ comment: "", photo_id: "" });
+        await loadData();
+    };
 
     if (loading) {
         return (
@@ -92,7 +121,11 @@ function UserPhotos() {
             {photos.map((photo) => (
                 <Paper key={photo._id} sx={{ p: 2, mb: 2 }}>
                     <Box sx={{ mb: 2 }}>
-                        <img src={imageMap[photo.file_name]} alt={`Photo by ${user.first_name}`} style={{ maxWidth: "100px" }} />
+                        <img
+                            src={imageMap[photo.file_name]}
+                            alt={`Photo by ${user.first_name}`}
+                            style={{ maxWidth: "100px" }}
+                        />
                     </Box>
                     <Typography variant="subtitle2" color="text.secondary">
                         {new Date(photo.date_time).toLocaleString()}
@@ -104,8 +137,13 @@ function UserPhotos() {
                                     <ListItem>
                                         <ListItemText
                                             primary={
-                                                <Link component={RouterLink} to={`/users/${comment.user._id}`} color="primary">
-                                                    {comment.user.first_name} {comment.user.last_name}
+                                                <Link
+                                                    component={RouterLink}
+                                                    to={`/users/${comment.user._id}`}
+                                                    color="primary"
+                                                >
+                                                    {comment.user.first_name}{" "}
+                                                    {comment.user.last_name}
                                                 </Link>
                                             }
                                             secondary={
@@ -119,8 +157,13 @@ function UserPhotos() {
                                                         }}
                                                     />
                                                     <br />
-                                                    <Typography variant="caption" color="text.secondary">
-                                                        {new Date(comment.date_time).toLocaleString()}
+                                                    <Typography
+                                                        variant="caption"
+                                                        color="text.secondary"
+                                                    >
+                                                        {new Date(
+                                                            comment.date_time
+                                                        ).toLocaleString()}
                                                     </Typography>
                                                 </>
                                             }
@@ -131,6 +174,28 @@ function UserPhotos() {
                             ))}
                         </List>
                     )}
+                    <TextField
+                        label="Thêm bình luận"
+                        variant="outlined"
+                        fullWidth
+                        multiline
+                        sx={{ mt: 2 }}
+                        onChange={(e) => {
+                            setNewComment({
+                                ...newComment,
+                                comment: e.target.value,
+                                photo_id: photo._id,
+                            });
+                        }}
+                    />
+                    <Button
+                        variant="contained"
+                        color="primary"
+                        onClick={handleAddComment}
+                        sx={{ mt: 2 }}
+                    >
+                        Gửi
+                    </Button>
                 </Paper>
             ))}
         </Box>

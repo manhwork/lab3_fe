@@ -1,45 +1,94 @@
 import "./App.css";
-
 import React from "react";
-import { Grid, Typography, Paper } from "@mui/material";
-import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import { Grid, Paper } from "@mui/material";
+import {
+    BrowserRouter as Router,
+    Route,
+    Routes,
+    Navigate,
+    useNavigate,
+} from "react-router-dom";
 
 import TopBar from "./components/TopBar";
 import UserDetail from "./components/UserDetail";
 import UserList from "./components/UserList";
 import UserPhotos from "./components/UserPhotos";
+import Login from "./components/Login";
+import Register from "./components/Register";
+import { AuthProvider, useAuth } from "./store/AuthContext";
 
-const App = (props) => {
+// Protected Route component
+const ProtectedRoute = ({ children }) => {
+    const token = localStorage.getItem("token");
+    const navigate = useNavigate();
+
+    if (!token) {
+        navigate("/login");
+    }
+
+    return children;
+};
+
+const AppContent = () => {
+    const token = localStorage.getItem("token");
     return (
-        <Router>
-            <div>
-                <Grid container spacing={2}>
-                    <Grid item xs={12}>
-                        <TopBar />
-                    </Grid>
-                    <div className="main-topbar-buffer" />
+        <div>
+            <Grid container spacing={2}>
+                <Grid item xs={12}>
+                    <TopBar />
+                </Grid>
+                <div className="main-topbar-buffer" />
+                {token && (
                     <Grid item sm={3}>
                         <Paper className="main-grid-item">
                             <UserList />
                         </Paper>
                     </Grid>
-                    <Grid item sm={9}>
-                        <Paper className="main-grid-item">
-                            <Routes>
-                                <Route
-                                    path="/users/:userId"
-                                    element={<UserDetail />}
-                                />
-                                <Route
-                                    path="/photos/:userId"
-                                    element={<UserPhotos />}
-                                />
-                                <Route path="/users" element={<UserList />} />
-                            </Routes>
-                        </Paper>
-                    </Grid>
+                )}
+                <Grid item sm={token ? 9 : 12}>
+                    <Paper className="main-grid-item">
+                        <Routes>
+                            <Route
+                                path="/users/:userId"
+                                element={
+                                    <ProtectedRoute>
+                                        <UserDetail />
+                                    </ProtectedRoute>
+                                }
+                            />
+                            <Route
+                                path="/photos/:userId"
+                                element={
+                                    <ProtectedRoute>
+                                        <UserPhotos />
+                                    </ProtectedRoute>
+                                }
+                            />
+                            <Route
+                                path="/users"
+                                element={
+                                    <ProtectedRoute>
+                                        <UserList />
+                                    </ProtectedRoute>
+                                }
+                            />
+                            <Route path="/login" element={<Login />} />
+                            <Route path="/register" element={<Register />} />
+                            <Route path="/" element={<Navigate to={"/"} />} />
+                        </Routes>
+                    </Paper>
                 </Grid>
-            </div>
+            </Grid>
+        </div>
+    );
+};
+
+const App = () => {
+    return (
+        <Router>
+            <AuthProvider>
+                <AppContent />
+            </AuthProvider>
         </Router>
     );
 };
