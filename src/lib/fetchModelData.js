@@ -6,8 +6,8 @@
  */
 async function fetchModel(url, options = {}) {
     try {
-        // const baseUrl = "https://mcws8y-8081.csb.app";
-        const baseUrl = "http://localhost:8081";
+        const baseUrl = "https://mcws8y-8081.csb.app";
+        // const baseUrl = "http://localhost:8081";
         const response = await fetch(`${baseUrl}${url}`, {
             ...options,
             credentials: "include",
